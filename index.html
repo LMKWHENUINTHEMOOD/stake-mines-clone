@@ -6,17 +6,49 @@
   <title>Stake Mines Clone</title>
   <style>
     body {
-      background-color: #1e1e2f;
-      color: white;
-      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .top-bar {
+      background-color: #1f1f2e;
+      padding: 15px;
       text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      color: #f39c12;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    .container {
+      display: flex;
+      flex: 1;
+    }
+    .game-area {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .sidebar {
+      flex: 1;
+      background-color: #1f1f2e;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
     }
     .grid {
       display: grid;
       grid-template-columns: repeat(5, 60px);
       gap: 10px;
-      justify-content: center;
-      margin: 20px;
     }
     .tile {
       width: 60px;
@@ -27,43 +59,86 @@
       align-items: center;
       cursor: pointer;
       font-size: 24px;
-      border-radius: 5px;
+      border-radius: 10px;
+      transition: transform 0.6s, background-color 0.3s;
+      transform-style: preserve-3d;
+    }
+    .tile.revealed {
+      transform: rotateY(180deg);
     }
     .tile.safe {
-      background-color: #2ecc71;
+      background-color: #27ae60;
     }
     .tile.mine {
-      background-color: #e74c3c;
+      background-color: #c0392b;
     }
-    button, input {
-      margin: 10px;
-      padding: 10px;
+    button, input, select {
+      margin: 10px 0;
+      padding: 12px;
       font-size: 16px;
-      border-radius: 5px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+    }
+    button {
+      background-color: #2980b9;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #3498db;
+    }
+    input, select {
+      width: 100%;
     }
     #status {
       margin-top: 20px;
-      font-size: 20px;
+      font-size: 18px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 26px;
+      margin-bottom: 20px;
+    }
+    label {
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
-  <h1>Stake Mines Clone (Fake Money)</h1>
-  <label>Bet Amount: ₹<input type="number" id="betAmount" min="1" value="10"></label>
-  <button onclick="startGame()">Start Game</button>
-  <div id="wallet">Wallet: ₹1000 (Fake)</div>
-  <div class="grid" id="grid"></div>
-  <button onclick="cashOut()">Cashout</button>
-  <div id="status"></div>
+  <div class="top-bar">
+    🔁 Current Multiplier: <span id="multiplier">1.0x</span> | 💰 Potential Cashout: ₹<span id="potentialCashout">0</span>
+  </div>
+  <div class="container">
+    <div class="game-area">
+      <h1>Stake Mines Clone 💣</h1>
+      <div class="grid" id="grid"></div>
+      <button onclick="cashOut()">💰 Cashout</button>
+      <div id="status"></div>
+    </div>
+    <div class="sidebar">
+      <label>Bet Amount: ₹<input type="number" id="betAmount" min="1" value="10"></label>
+      <label>Difficulty:
+        <select id="difficulty">
+          <option value="3">Easy (3 Mines)</option>
+          <option value="5">Medium (5 Mines)</option>
+          <option value="8">Hard (8 Mines)</option>
+        </select>
+      </label>
+      <button onclick="startGame()">🎮 Start Game</button>
+      <div id="wallet">Wallet: ₹1000 (Fake)</div>
+    </div>
+  </div>
 
   <!-- Sounds -->
-  <audio id="clickSound" src="https://www.fesliyanstudios.com/play-mp3/387" preload="auto"></audio>
-  <audio id="boomSound" src="https://www.fesliyanstudios.com/play-mp3/6678" preload="auto"></audio>
-  <audio id="cashoutSound" src="https://www.fesliyanstudios.com/play-mp3/6984" preload="auto"></audio>
+  <audio id="clickSound" src="https://freesound.org/data/previews/522/522033_1157887-lq.mp3" preload="auto"></audio>
+  <audio id="boomSound" src="https://freesound.org/data/previews/178/178100_285997-lq.mp3" preload="auto"></audio>
+  <audio id="cashoutSound" src="https://freesound.org/data/previews/341/341695_6244010-lq.mp3" preload="auto"></audio>
 
   <script>
     const gridSize = 5;
-    const minesCount = 3;
+    let minesCount = 3;
     let grid = [];
     let revealed = [];
     let gameOver = false;
@@ -75,8 +150,16 @@
     const boomSound = document.getElementById("boomSound");
     const cashoutSound = document.getElementById("cashoutSound");
 
+    function updateMultiplierDisplay() {
+      const multiplier = (1 + safeRevealed * (minesCount / 15)).toFixed(2);
+      const potential = Math.floor(bet * multiplier);
+      document.getElementById("multiplier").innerText = `${multiplier}x`;
+      document.getElementById("potentialCashout").innerText = potential;
+    }
+
     function startGame() {
       bet = parseInt(document.getElementById("betAmount").value);
+      minesCount = parseInt(document.getElementById("difficulty").value);
       if (bet > wallet || bet <= 0) {
         alert("Invalid bet amount.");
         return;
@@ -85,6 +168,8 @@
       wallet -= bet;
       document.getElementById("wallet").innerText = `Wallet: ₹${wallet} (Fake)`;
       document.getElementById("status").innerText = "";
+      document.getElementById("multiplier").innerText = "1.0x";
+      document.getElementById("potentialCashout").innerText = "0";
       gameOver = false;
       safeRevealed = 0;
       grid = Array.from({ length: gridSize }, () => Array(gridSize).fill("safe"));
@@ -111,6 +196,7 @@
           const tile = document.createElement("div");
           tile.classList.add("tile");
           if (revealed[row][col]) {
+            tile.classList.add("revealed");
             tile.classList.add(grid[row][col]);
             tile.innerHTML = grid[row][col] === "safe" ? "💎" : "💣";
           }
@@ -131,13 +217,14 @@
       } else {
         clickSound.play();
         safeRevealed++;
+        updateMultiplierDisplay();
       }
       drawGrid();
     }
 
     function cashOut() {
       if (gameOver || safeRevealed === 0) return;
-      const multiplier = 1 + safeRevealed * 0.2;
+      const multiplier = 1 + safeRevealed * (minesCount / 15);
       const winnings = Math.floor(bet * multiplier);
       wallet += winnings;
       document.getElementById("wallet").innerText = `Wallet: ₹${wallet} (Fake)`;
