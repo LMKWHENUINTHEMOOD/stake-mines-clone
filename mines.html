@@ -141,7 +141,7 @@
       <label>Mines Count:
         <input type="number" id="minesCount" min="1" max="10" value="3">
       </label>
-      <button onclick="startGame()">🎮 Start Game</button>
+      <button id="startBtn" onclick="startGame()">🎮 Start Game</button>
       <div id="wallet">Wallet: ₹1000 (Fake)</div>
       <div class="accessory-tab">
         <h3>Gem Accessories</h3>
@@ -152,7 +152,7 @@
     </div>
   </div>
   <div class="bottom-buttons">
-    <button onclick="revealMines()" style="background-color:#e74c3c">Reveal Mines</button>
+    <button onclick="revealMines()" style="background-color:#e74c3c">Reveal Mines (₹100000)</button>
     <button onclick="saveGame()" style="background-color:#9b59b6">Save Game</button>
     <button onclick="skipGame()" style="background-color:#f1c40f">Skip Game (₹30000)</button>
     <button onclick="buyAccessories()" style="background-color:#2ecc71">Buy Accessories</button>
@@ -168,14 +168,25 @@
     const walletEl = document.getElementById('wallet');
     const revealSound = document.getElementById('revealSound');
     const boomSound = document.getElementById('boomSound');
+    const startBtn = document.getElementById('startBtn');
+
     let tiles = [];
     let minePositions = [];
     let revealedCount = 0;
     let bet = 0;
     let multiplier = 1.0;
     let wallet = 1000;
+    let gameActive = false;
 
     function startGame() {
+      if (gameActive) return;
+      bet = parseInt(document.getElementById('betAmount').value);
+      if (isNaN(bet) || bet > wallet || bet <= 0 || bet > 1000000) {
+        alert('Invalid bet');
+        return;
+      }
+      gameActive = true;
+      startBtn.disabled = true;
       grid.innerHTML = '';
       minePositions = [];
       tiles = [];
@@ -183,8 +194,6 @@
       multiplier = 1.0;
       const difficulty = parseInt(document.getElementById('difficulty').value);
       const minesCount = parseInt(document.getElementById('minesCount').value);
-      bet = parseInt(document.getElementById('betAmount').value);
-      if (bet > wallet || bet <= 0) return alert('Invalid bet');
       wallet -= bet;
       walletEl.textContent = `Wallet: ₹${wallet}`;
       document.getElementById('status').textContent = '';
@@ -210,7 +219,9 @@
         tile.classList.add('mine');
         boomSound.play();
         document.getElementById('status').textContent = '💥 You hit a mine!';
-        revealMines();
+        revealMines(false);
+        gameActive = false;
+        startBtn.disabled = false;
       } else {
         tile.classList.add('safe');
         revealSound.play();
@@ -226,14 +237,26 @@
     }
 
     function cashOut() {
+      if (!gameActive) return;
       const cash = Math.floor(bet * multiplier);
       wallet += cash;
       walletEl.textContent = `Wallet: ₹${wallet}`;
       document.getElementById('status').textContent = `✅ You cashed out ₹${cash}`;
       for (let tile of tiles) tile.onclick = null;
+      gameActive = false;
+      startBtn.disabled = false;
     }
 
-    function revealMines() {
+    function revealMines(userTriggered = true) {
+      const cost = 100000;
+      if (userTriggered) {
+        if (wallet < cost) {
+          alert('Not enough money to reveal mines.');
+          return;
+        }
+        wallet -= cost;
+        walletEl.textContent = `Wallet: ₹${wallet}`;
+      }
       minePositions.forEach(index => {
         const tile = tiles[index];
         tile.classList.add('mine', 'revealed');
@@ -249,6 +272,8 @@
         wallet -= 30000;
         walletEl.textContent = `Wallet: ₹${wallet}`;
         document.getElementById('status').textContent = '⏭️ Game skipped.';
+        gameActive = false;
+        startBtn.disabled = false;
         startGame();
       } else {
         alert('Not enough fake money.');
