@@ -107,14 +107,13 @@
     .bottom-buttons {
       display: flex;
       justify-content: space-around;
-      background: #1f1f2e;
-      padding: 10px;
+      margin: 20px;
     }
-    .accessory-shop {
-      margin-top: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    .accessory-tab {
+      background-color: #1f1f2e;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 10px;
     }
   </style>
 </head>
@@ -133,79 +132,158 @@
       <label>Bet Amount: ₹<input type="number" id="betAmount" min="1" value="10"></label>
       <label>Difficulty:
         <select id="difficulty">
-          <option value="3">Easy (3 Mines)</option>
-          <option value="5">Medium (5 Mines)</option>
-          <option value="8">Hard (8 Mines)</option>
+          <option value="1">Easy</option>
+          <option value="2">Medium</option>
+          <option value="3">Hard</option>
         </select>
+      </label>
+      <label>Mines Count:
+        <input type="number" id="minesCount" min="1" max="10" value="3">
       </label>
       <button onclick="startGame()">🎮 Start Game</button>
       <div id="wallet">Wallet: ₹1000 (Fake)</div>
-
-      <div class="accessory-shop">
-        <h3>🧢 Gem Accessories</h3>
-        <button onclick="equipGemAccessory('penguin')">🐧 Penguin Hat</button>
-        <button onclick="equipGemAccessory('straw')">👒 Straw Hat</button>
-        <button onclick="equipGemAccessory('frog')">🐸 Frog Hat</button>
-
-        <h3>🔥 Mine Accessories</h3>
-        <button onclick="equipMineAccessory('firey')">🔥 Firey</button>
-        <button onclick="equipMineAccessory('ace')">🧯 Ace</button>
+      <div class="accessory-tab">
+        <h3>Gem Accessories</h3>
+        <ul><li>🧊 Penguin Hat</li><li>👒 Straw Hat</li><li>🐸 Frog Hat</li></ul>
+        <h3>Mine Accessories</h3>
+        <ul><li>🔥 Firey</li><li>🧢 Ace (One Piece)</li></ul>
       </div>
     </div>
   </div>
-
   <div class="bottom-buttons">
-    <button onclick="revealMines()">🔍 Reveal Mines</button>
-    <button onclick="saveGame()">💾 Save Game</button>
-    <button onclick="skipGame()">⏩ Skip Game (₹30000)</button>
+    <button onclick="revealMines()" style="background-color:#e74c3c">Reveal Mines</button>
+    <button onclick="saveGame()" style="background-color:#9b59b6">Save Game</button>
+    <button onclick="skipGame()" style="background-color:#f1c40f">Skip Game (₹30000)</button>
+    <button onclick="buyAccessories()" style="background-color:#2ecc71">Buy Accessories</button>
   </div>
 
   <script>
-    let gemAccessory = null;
-    let mineAccessory = null;
+    const gridSize = 5;
+    let grid = [];
+    let revealed = [];
+    let gameOver = false;
+    let safeRevealed = 0;
+    let wallet = 1000;
+    let bet = 0;
+    let minesCount = 3;
 
-    function equipGemAccessory(type) {
-      gemAccessory = type;
-      alert(`Equipped ${type} hat for gems!`);
+    function updateMultiplierDisplay() {
+      let multiplier = Math.min(1 + safeRevealed * (24 / (gridSize * gridSize)), 24).toFixed(2);
+      const potential = Math.floor(bet * multiplier);
+      document.getElementById("multiplier").innerText = `${multiplier}x`;
+      document.getElementById("potentialCashout").innerText = potential;
     }
 
-    function equipMineAccessory(type) {
-      mineAccessory = type;
-      alert(`Equipped ${type} accessory for mines!`);
+    function startGame() {
+      bet = parseInt(document.getElementById("betAmount").value);
+      const difficulty = parseInt(document.getElementById("difficulty").value);
+      minesCount = parseInt(document.getElementById("minesCount").value);
+
+      if (bet > wallet || bet <= 0 || minesCount < 1 || minesCount > 10) {
+        alert("Invalid bet amount or mines count.");
+        return;
+      }
+
+      wallet -= bet;
+      document.getElementById("wallet").innerText = `Wallet: ₹${wallet} (Fake)`;
+      document.getElementById("status").innerText = "";
+      document.getElementById("multiplier").innerText = "1.0x";
+      document.getElementById("potentialCashout").innerText = "0";
+
+      gameOver = false;
+      safeRevealed = 0;
+      grid = Array.from({ length: gridSize }, () => Array(gridSize).fill("safe"));
+      revealed = Array.from({ length: gridSize }, () => Array(gridSize).fill(false));
+
+      let placed = 0;
+      while (placed < minesCount) {
+        const row = Math.floor(Math.random() * gridSize);
+        const col = Math.floor(Math.random() * gridSize);
+        if (grid[row][col] === "safe") {
+          grid[row][col] = "mine";
+          placed++;
+        }
+      }
+
+      drawGrid();
+    }
+
+    function drawGrid() {
+      const gridElement = document.getElementById("grid");
+      gridElement.innerHTML = "";
+      for (let row = 0; row < gridSize; row++) {
+        for (let col = 0; col < gridSize; col++) {
+          const tile = document.createElement("div");
+          tile.classList.add("tile");
+          if (revealed[row][col] || (gameOver && grid[row][col] === "mine")) {
+            tile.classList.add("revealed");
+            tile.classList.add(grid[row][col]);
+            tile.innerHTML = grid[row][col] === "safe" ? "💎" : "💣";
+          }
+          tile.onclick = () => revealTile(row, col);
+          gridElement.appendChild(tile);
+        }
+      }
+    }
+
+    function revealTile(row, col) {
+      if (gameOver || revealed[row][col]) return;
+      revealed[row][col] = true;
+
+      if (grid[row][col] === "mine") {
+        gameOver = true;
+        document.getElementById("status").innerText = "💥 Boom! You hit a mine!";
+      } else {
+        safeRevealed++;
+        updateMultiplierDisplay();
+      }
+      drawGrid();
+    }
+
+    function cashOut() {
+      if (gameOver || safeRevealed === 0) return;
+      let multiplier = Math.min(1 + safeRevealed * (24 / (gridSize * gridSize)), 24);
+      const winnings = Math.floor(bet * multiplier);
+      wallet += winnings;
+      document.getElementById("wallet").innerText = `Wallet: ₹${wallet} (Fake)`;
+      document.getElementById("status").innerText = `✅ Cashed out ₹${winnings} with ${safeRevealed} gems!`;
+      gameOver = true;
+      drawGrid();
     }
 
     function revealMines() {
-      const cost = minesCount === 1 ? 15000 : minesCount * 10000;
+      const difficulty = parseInt(document.getElementById("difficulty").value);
+      const cost = 15000 * difficulty;
       if (wallet >= cost) {
         wallet -= cost;
-        alert("Mines revealed (cheater 😎)");
-        revealed = grid.map(row => row.map(cell => true));
-        drawGrid();
         document.getElementById("wallet").innerText = `Wallet: ₹${wallet} (Fake)`;
+        gameOver = true;
+        drawGrid();
       } else {
         alert("Not enough money to reveal mines.");
       }
     }
 
     function saveGame() {
-      const email = prompt("Enter your email to save game:");
-      if (email && email.includes("@")) {
-        alert("Game saved to: " + email);
-      } else {
-        alert("Invalid email.");
-      }
+      const email = prompt("Enter your email to save the game:");
+      if (email) alert(`Game saved for ${email}.`);
     }
 
     function skipGame() {
       const cost = 30000;
       if (wallet >= cost) {
         wallet -= cost;
-        gameOver = true;
         document.getElementById("wallet").innerText = `Wallet: ₹${wallet} (Fake)`;
-        document.getElementById("status").innerText = "Game skipped successfully!";
+        gameOver = true;
+        document.getElementById("status").innerText = "⏭️ Game skipped!";
+        drawGrid();
       } else {
         alert("Not enough money to skip game.");
       }
+    }
+
+    function buyAccessories() {
+      alert("Accessory store is currently in development!");
     }
   </script>
 </body>
