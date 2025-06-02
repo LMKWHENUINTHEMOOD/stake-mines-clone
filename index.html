@@ -60,7 +60,7 @@
       cursor: pointer;
       font-size: 24px;
       border-radius: 10px;
-      transition: transform 0.6s, background-color 0.3s;
+      transition: transform 0.6s ease, background-color 0.3s ease;
       transform-style: preserve-3d;
     }
     .tile.revealed {
@@ -157,6 +157,9 @@
     <button onclick="buyAccessories()" style="background-color:#2ecc71">Buy Accessories</button>
   </div>
 
+  <audio id="revealSound" src="https://www.myinstants.com/media/sounds/minecraft-pop.mp3"></audio>
+  <audio id="boomSound" src="https://www.myinstants.com/media/sounds/explosion.mp3"></audio>
+
   <script>
     const gridSize = 5;
     let grid = [];
@@ -166,6 +169,9 @@
     let wallet = 1000;
     let bet = 0;
     let minesCount = 3;
+
+    const revealSound = document.getElementById("revealSound");
+    const boomSound = document.getElementById("boomSound");
 
     function updateMultiplierDisplay() {
       let multiplier = Math.min(1 + safeRevealed * (24 / (gridSize * gridSize)), 24).toFixed(2);
@@ -231,9 +237,11 @@
       revealed[row][col] = true;
 
       if (grid[row][col] === "mine") {
+        boomSound.play();
         gameOver = true;
         document.getElementById("status").innerText = "💥 Boom! You hit a mine!";
       } else {
+        revealSound.play();
         safeRevealed++;
         updateMultiplierDisplay();
       }
