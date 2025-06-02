@@ -162,7 +162,102 @@
   <audio id="boomSound" src="https://www.myinstants.com/media/sounds/explosion.mp3"></audio>
 
   <script>
-    // (JavaScript remains unchanged)
+    const grid = document.getElementById('grid');
+    const multiplierEl = document.getElementById('multiplier');
+    const cashoutEl = document.getElementById('potentialCashout');
+    const walletEl = document.getElementById('wallet');
+    const revealSound = document.getElementById('revealSound');
+    const boomSound = document.getElementById('boomSound');
+    let tiles = [];
+    let minePositions = [];
+    let revealedCount = 0;
+    let bet = 0;
+    let multiplier = 1.0;
+    let wallet = 1000;
+
+    function startGame() {
+      grid.innerHTML = '';
+      minePositions = [];
+      tiles = [];
+      revealedCount = 0;
+      multiplier = 1.0;
+      const difficulty = parseInt(document.getElementById('difficulty').value);
+      const minesCount = parseInt(document.getElementById('minesCount').value);
+      bet = parseInt(document.getElementById('betAmount').value);
+      if (bet > wallet || bet <= 0) return alert('Invalid bet');
+      wallet -= bet;
+      walletEl.textContent = `Wallet: ₹${wallet}`;
+      document.getElementById('status').textContent = '';
+      const mineIndexes = new Set();
+      while (mineIndexes.size < minesCount) {
+        mineIndexes.add(Math.floor(Math.random() * 25));
+      }
+      minePositions = Array.from(mineIndexes);
+      for (let i = 0; i < 25; i++) {
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        tile.onclick = () => revealTile(tile, i);
+        grid.appendChild(tile);
+        tiles.push(tile);
+      }
+      updateCashout();
+    }
+
+    function revealTile(tile, index) {
+      if (tile.classList.contains('revealed')) return;
+      tile.classList.add('revealed');
+      if (minePositions.includes(index)) {
+        tile.classList.add('mine');
+        boomSound.play();
+        document.getElementById('status').textContent = '💥 You hit a mine!';
+        revealMines();
+      } else {
+        tile.classList.add('safe');
+        revealSound.play();
+        revealedCount++;
+        multiplier += 0.5;
+        updateCashout();
+      }
+    }
+
+    function updateCashout() {
+      multiplierEl.textContent = multiplier.toFixed(1) + 'x';
+      cashoutEl.textContent = Math.floor(bet * multiplier);
+    }
+
+    function cashOut() {
+      const cash = Math.floor(bet * multiplier);
+      wallet += cash;
+      walletEl.textContent = `Wallet: ₹${wallet}`;
+      document.getElementById('status').textContent = `✅ You cashed out ₹${cash}`;
+      for (let tile of tiles) tile.onclick = null;
+    }
+
+    function revealMines() {
+      minePositions.forEach(index => {
+        const tile = tiles[index];
+        tile.classList.add('mine', 'revealed');
+      });
+    }
+
+    function saveGame() {
+      alert('Game saved! (pretend)');
+    }
+
+    function skipGame() {
+      if (wallet >= 30000) {
+        wallet -= 30000;
+        walletEl.textContent = `Wallet: ₹${wallet}`;
+        document.getElementById('status').textContent = '⏭️ Game skipped.';
+        startGame();
+      } else {
+        alert('Not enough fake money.');
+      }
+    }
+
+    function buyAccessories() {
+      alert('Opening accessories shop (not implemented yet)');
+    }
   </script>
 </body>
 </html>
