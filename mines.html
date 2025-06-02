@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stake Mines Clone</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <style>
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .top-bar {
+      background-color: #1f1f2e;
+      padding: 15px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      color: #f39c12;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    .container {
+      display: flex;
+      flex: 1;
+    }
+    .game-area {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .sidebar {
+      flex: 1;
+      background-color: #1f1f2e;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 60px);
+      gap: 10px;
+    }
+    .tile {
+      width: 60px;
+      height: 60px;
+      background-color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      font-size: 24px;
+      border-radius: 10px;
+      transition: transform 0.6s ease, background-color 0.3s ease;
+      transform-style: preserve-3d;
+    }
+    .tile.revealed {
+      transform: rotateY(180deg);
+    }
+    .tile.safe {
+      background-color: #27ae60;
+    }
+    .tile.mine {
+      background-color: #c0392b;
+    }
+    button, input, select {
+      margin: 10px 0;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+    }
+    button {
+      background-color: #2980b9;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #3498db;
+    }
+    input, select {
+      width: 100%;
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 18px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 26px;
+      margin-bottom: 20px;
+    }
+    label {
+      font-size: 16px;
+    }
+    .bottom-buttons {
+      display: flex;
+      justify-content: space-around;
+      margin: 20px;
+    }
+    .accessory-tab {
+      background-color: #1f1f2e;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    🔁 Current Multiplier: <span id="multiplier">1.0x</span> | 💰 Potential Cashout: ₹<span id="potentialCashout">0</span>
+  </div>
+  <div class="container">
+    <div class="game-area">
+      <h1>Stake Mines Clone 💣</h1>
+      <div class="grid" id="grid"></div>
+      <button onclick="cashOut()">💰 Cashout</button>
+      <div id="status"></div>
+    </div>
+    <div class="sidebar">
+      <label>Bet Amount: ₹<input type="number" id="betAmount" min="1" value="10"></label>
+      <label>Difficulty:
+        <select id="difficulty">
+          <option value="1">Easy</option>
+          <option value="2">Medium</option>
+          <option value="3">Hard</option>
+        </select>
+      </label>
+      <label>Mines Count:
+        <input type="number" id="minesCount" min="1" max="10" value="3">
+      </label>
+      <button onclick="startGame()">🎮 Start Game</button>
+      <div id="wallet">Wallet: ₹1000 (Fake)</div>
+      <div class="accessory-tab">
+        <h3>Gem Accessories</h3>
+        <ul><li>🧊 Penguin Hat</li><li>👒 Straw Hat</li><li>🐸 Frog Hat</li></ul>
+        <h3>Mine Accessories</h3>
+        <ul><li>🔥 Firey</li><li>🧢 Ace (One Piece)</li></ul>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-buttons">
+    <button onclick="revealMines()" style="background-color:#e74c3c">Reveal Mines</button>
+    <button onclick="saveGame()" style="background-color:#9b59b6">Save Game</button>
+    <button onclick="skipGame()" style="background-color:#f1c40f">Skip Game (₹30000)</button>
+    <button onclick="buyAccessories()" style="background-color:#2ecc71">Buy Accessories</button>
+  </div>
+
+  <audio id="revealSound" src="https://www.myinstants.com/media/sounds/minecraft-pop.mp3"></audio>
+  <audio id="boomSound" src="https://www.myinstants.com/media/sounds/explosion.mp3"></audio>
+
+  <script>
+    // (JavaScript remains unchanged)
+  </script>
+</body>
+</html>
